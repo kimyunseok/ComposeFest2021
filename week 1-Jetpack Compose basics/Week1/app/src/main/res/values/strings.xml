@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">Week1</string>
+    <!-- 문자열 하드코딩은 좋지않은 습관. 여기서 선언하고 사용하는 것이 좋다. -->
+    <string name="show_less">Show less</string>
+    <string name="show_more">Show more</string>
 </resources>

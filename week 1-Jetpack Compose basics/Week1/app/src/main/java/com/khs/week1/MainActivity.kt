@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
@@ -13,15 +14,20 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.khs.week1.ui.theme.Week1Theme
+import kotlin.math.exp
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,18 +53,11 @@ fun OnBoardingScreen(onContinueClicked: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(text = "Welcome to the Basic Codelab !")
-            Button(modifier = Modifier.padding(vertical = 24.dp), onClick = onContinueClicked) {
+            Button(modifier = Modifier.padding(vertical = 24.dp),
+                onClick = onContinueClicked) {
                 Text(text = "Continue")
             }
         }
-    }
-}
-
-@Preview(showBackground = true, widthDp = 320, heightDp = 320)
-@Composable
-fun OnboardingPreview() {
-    Week1Theme {
-        OnBoardingScreen(onContinueClicked = { })
     }
 }
 
@@ -98,41 +97,86 @@ private fun MyApp(names: List<String> = listOf("World", "Compose")) {
  * */
 @Composable
 private fun Greeting(name: String) {
+    Card(
+        backgroundColor = MaterialTheme.colors.primary,
+        modifier = Modifier.padding(vertical = 4.dp, horizontal = 8.dp)
+    ) {
+        CardContent(name)
+    }
+
+//    val extraPadding by animateDpAsState(
+//        if(expanded) 48.dp else 0.dp,
+//        animationSpec = spring(
+//            dampingRatio = Spring.DampingRatioMediumBouncy,
+//            stiffness = Spring.StiffnessLow
+//        )
+//    )
+//
+//    Surface(color = MaterialTheme.colors.primary,
+//        modifier = Modifier.padding(vertical = 4.dp, horizontal = 8.dp)) {
+//        Row(modifier = Modifier.padding(24.dp)) {
+//            Column(modifier = Modifier
+//                .weight(1F)
+//                .padding(bottom = extraPadding.coerceAtLeast(0.dp))) // coerceAtLeast를 추가해서 패딩이 음수가 되지않게 한다.
+//            {
+//                Text(text = "Hello,")
+//                Text(text = name, style = MaterialTheme.typography.h4.copy(
+//                    fontWeight = FontWeight.ExtraBold
+//                )
+//                ) //스타일 지정
+//            }
+//            OutlinedButton(
+//                onClick = {
+//                    expanded = expanded.not()
+//                }
+//            ) {
+//                Text( if(expanded) "Show less" else "Show More")
+//            }
+//
+//        }
+        //Text(text = "Hello $name!", modifier = Modifier.padding(24.dp))
+}
+
+@Composable
+private fun CardContent(name: String) {
     var expanded by remember { mutableStateOf(false) }
 
-    val extraPadding by animateDpAsState(
-        if(expanded) 48.dp else 0.dp,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessLow
-        )
-    )
-
-    Surface(color = MaterialTheme.colors.primary,
-        modifier = Modifier.padding(vertical = 4.dp, horizontal = 8.dp)) {
-        Row(modifier = Modifier.padding(24.dp)) {
-            Column(modifier = Modifier
-                .weight(1F)
-                .padding(bottom = extraPadding.coerceAtLeast(0.dp))) // coerceAtLeast를 추가해서 패딩이 음수가 되지않게 한다.
-            {
-                Text(text = "Hello,")
-                Text(text = name, style = MaterialTheme.typography.h4.copy(
-                    fontWeight = FontWeight.ExtraBold
+    Row(
+        modifier = Modifier
+            .padding(12.dp)
+            .animateContentSize(
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessLow
                 )
-                ) //스타일 지정
+            )
+    //animateContentSize를 사용함으로써, 애니메이션을 자동으로 생성하게 해주고, corceAtLeast사용이 필요없게 해준다.
+    ) {
+        Column(modifier = Modifier
+            .weight(1F)
+            .padding(12.dp)) {
+            Text("Hello, ")
+            Text(text = name, style = MaterialTheme.typography.h4.copy(
+                fontWeight = FontWeight.ExtraBold
+            ))
+            if (expanded) {
+                Text(text = ("Composem ipsum color sit lazy, " +
+                        "padding theme elit, sed do bouncy. ").repeat(4))
             }
-            OutlinedButton(
-                onClick = {
-                    expanded = expanded.not()
-                }
-            ) {
-                Text( if(expanded) "Show less" else "Show More")
-            }
-
         }
-        //Text(text = "Hello $name!", modifier = Modifier.padding(24.dp))
+        IconButton(onClick = { expanded = expanded.not() }) {
+            Icon(
+                imageVector = if(expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                contentDescription = if(expanded) {
+                    stringResource(R.string.show_less)
+                } else {
+                    stringResource(id = R.string.show_more)
+                }
+            )
+        }
     }
 }
+
 /**
  * Week1 - 9 퍼포먼스가 좋은 LazyList만들기 : LazyColumn은 화면에 보이는 항목만 렌더링한다. 따라서 큰 목록을 랜더링할 때 성능이 좋아진다.
  * LazyColumn, LazyRow는 RecyclerView와 동일하다. 다만 RecyclerView처럼 자식을 재활용하지는 않는다.
@@ -163,5 +207,13 @@ private fun Greetings(names: List<String> = List(1000) {"$it"}) {
 fun DefaultPreview() {
     Week1Theme {
         MyApp()
+    }
+}
+
+@Preview(showBackground = true, widthDp = 320, heightDp = 320)
+@Composable
+fun OnboardingPreview() {
+    Week1Theme {
+        OnBoardingScreen(onContinueClicked = { })
     }
 }
