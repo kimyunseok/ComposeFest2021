@@ -1,5 +1,6 @@
 package com.khs.week1
 
+import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -16,6 +17,8 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.khs.week1.ui.theme.Week1Theme
@@ -91,6 +94,7 @@ private fun MyApp(names: List<String> = listOf("World", "Compose")) {
  * Week1 - 11 컴포즈에서의 애니메이션 : animateDpAsState를 사용한 간단한 애니메이션을 만들 수 있다.
  * animateDpAsState는 애니메이션이 끝날 때까지 값이 변하는 state를 return한다.
  * animationSpec을 추가해서 스프링 기반 애니메이션을 만들 수 있다.
+ * Week1 - 12 앱 스타일 및 테마 : copy 메서드를 통해서 미리 정의된 스타일을 수정해서 반영시킬 수 있다.
  * */
 @Composable
 private fun Greeting(name: String) {
@@ -112,7 +116,10 @@ private fun Greeting(name: String) {
                 .padding(bottom = extraPadding.coerceAtLeast(0.dp))) // coerceAtLeast를 추가해서 패딩이 음수가 되지않게 한다.
             {
                 Text(text = "Hello,")
-                Text(text = name)
+                Text(text = name, style = MaterialTheme.typography.h4.copy(
+                    fontWeight = FontWeight.ExtraBold
+                )
+                ) //스타일 지정
             }
             OutlinedButton(
                 onClick = {
@@ -121,7 +128,7 @@ private fun Greeting(name: String) {
             ) {
                 Text( if(expanded) "Show less" else "Show More")
             }
-            
+
         }
         //Text(text = "Hello $name!", modifier = Modifier.padding(24.dp))
     }
@@ -135,7 +142,7 @@ private fun Greeting(name: String) {
 private fun Greetings(names: List<String> = List(1000) {"$it"}) {
     LazyColumn(modifier = Modifier.padding(4.dp)) {
         items(items = names) {
-            name ->
+                name ->
             Log.d("check_name::", name) // 로그찍어보면 재활용하지 않는다는것을 알 수 있다.
             Greeting(name)
         }
@@ -150,6 +157,7 @@ private fun Greetings(names: List<String> = List(1000) {"$it"}) {
 /**
  * Week1 - 6 열과 행 만들기 : widthDp를 통해서 가로크기를 정할 수 있다.
  * */
+@Preview(showBackground = true, widthDp = 320, uiMode = UI_MODE_NIGHT_YES, name = "DefaultPreviewDark") // 어두운 테마 미리보기 추가
 @Preview(showBackground = true, name = "Text Preview", widthDp = 320) // @Preview 어노테이션을 사용해서 미리볼 수 있다.
 @Composable
 fun DefaultPreview() {
