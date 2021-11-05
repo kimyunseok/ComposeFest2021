@@ -6,9 +6,8 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -27,18 +26,47 @@ class MainActivity : ComponentActivity() {
 }
 
 /**
+ * Week1 - 8 state hoisting : state hoisting은 여러 메서드들에 의해 읽히고 수정되는 state는 공통 조상에 있어야 함을 의미한다.(여기서는 My App)
+ * 이것은 state의 중복, 버그, 컴포저블의 재사용에 도움을 준다. 컴포저블의 부모에 의해 controll 되지않는 state는 hoist되어서는 안된다.
+ * Week 1 - 8 메서드의 매개변수에 onContinueClicked를 넘겨줘서 버튼을 누를 때 이벤트를 전달하도록 한다.
+ * */
+@Composable
+fun OnBoardingScreen(onContinueClicked: () -> Unit) {
+    Surface {
+        Column(modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(text = "Welcome to the Basic Codelab !")
+            Button(modifier = Modifier.padding(vertical = 24.dp), onClick = onContinueClicked) {
+                Text(text = "Continue")
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true, widthDp = 320, heightDp = 320)
+@Composable
+fun OnboardingPreview() {
+    Week1Theme {
+        OnBoardingScreen(onContinueClicked = { })
+    }
+}
+
+/**
  * Week1 - 5 컴포저블 재사용 : 코드중복을 방지시킬 수 있다.
  * Week1 - 6 열과 행 만들기 : 리스트를 통해서 뷰에 열 쌓기
  * Week1 - 6 열과 행 만들기 : 만들 뷰의 바깥쪽에 패딩 주는 법. 이곳에서는 뷰의 안쪽에는 패딩이 주어지지 않는다.
  * */
 @Composable
 private fun MyApp(names: List<String> = listOf("World", "Compose")) {
-    Column(modifier = Modifier.padding(vertical = 4.dp)) {
-        for (name in names) {
-            Greeting(name = name)
-        }
+    var shouldShowOnBoarding by remember { mutableStateOf(true)}
+    //by를 사용하면 value 없이 값을 할당하거나 읽을 수 있게해준다.
+    if(shouldShowOnBoarding) {
+        OnBoardingScreen(onContinueClicked = {shouldShowOnBoarding = false})
+    } else {
+        Greetings()
     }
-
 //    Surface(color = MaterialTheme.colors.background) {
 //        Greeting("Android")
 //    }
@@ -77,6 +105,15 @@ private fun Greeting(name: String) {
             
         }
         //Text(text = "Hello $name!", modifier = Modifier.padding(24.dp))
+    }
+}
+
+@Composable
+private fun Greetings(names: List<String> = listOf("World", "Compose")) {
+    Column(modifier = Modifier.padding(4.dp)) {
+        for(name in names) {
+            Greeting(name)
+        }
     }
 }
 
