@@ -1,10 +1,13 @@
 package com.khs.week1
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -107,14 +110,25 @@ private fun Greeting(name: String) {
         //Text(text = "Hello $name!", modifier = Modifier.padding(24.dp))
     }
 }
-
+/**
+ * Week1 - 9 퍼포먼스가 좋은 LazyList만들기 : LazyColumn은 화면에 보이는 항목만 렌더링한다. 따라서 큰 목록을 랜더링할 때 성능이 좋아진다.
+ * LazyColumn, LazyRow는 RecyclerView와 동일하다. 다만 RecyclerView처럼 자식을 재활용하지는 않는다.
+ * 스크롤할 때 Composable을 내보내는데, Composable을 내보내는 것이 Android 인스턴스화하는 것보다 상대적으로 저렴하기 때문이다.
+ * */
 @Composable
-private fun Greetings(names: List<String> = listOf("World", "Compose")) {
-    Column(modifier = Modifier.padding(4.dp)) {
-        for(name in names) {
+private fun Greetings(names: List<String> = List(1000) {"$it"}) {
+    LazyColumn(modifier = Modifier.padding(4.dp)) {
+        items(items = names) {
+            name ->
+            Log.d("check_name::", name) // 로그찍어보면 재활용하지 않는다는것을 알 수 있다.
             Greeting(name)
         }
     }
+//    Column(modifier = Modifier.padding(4.dp)) {
+//        for(name in names) {
+//            Greeting(name)
+//        }
+//    }
 }
 
 /**
