@@ -10,12 +10,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.khs.week1.ui.theme.Week1Theme
-import kotlin.math.exp
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -60,10 +60,12 @@ fun OnboardingPreview() {
  * Week1 - 5 컴포저블 재사용 : 코드중복을 방지시킬 수 있다.
  * Week1 - 6 열과 행 만들기 : 리스트를 통해서 뷰에 열 쌓기
  * Week1 - 6 열과 행 만들기 : 만들 뷰의 바깥쪽에 패딩 주는 법. 이곳에서는 뷰의 안쪽에는 패딩이 주어지지 않는다.
+ * Week1 - 10 state 지속 : remember 대신 rememberSaveable을 사용하면 프로세스 종료된 상태에서도 상태가 저장된다.
  * */
 @Composable
 private fun MyApp(names: List<String> = listOf("World", "Compose")) {
-    var shouldShowOnBoarding by remember { mutableStateOf(true)}
+    var shouldShowOnBoarding by rememberSaveable { mutableStateOf(true)}
+    //var shouldShowOnBoarding by remember { mutableStateOf(true)}
     //by를 사용하면 value 없이 값을 할당하거나 읽을 수 있게해준다.
     if(shouldShowOnBoarding) {
         OnBoardingScreen(onContinueClicked = {shouldShowOnBoarding = false})
