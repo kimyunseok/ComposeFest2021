@@ -4,6 +4,9 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.lazy.LazyColumn
@@ -84,28 +87,39 @@ private fun MyApp(names: List<String> = listOf("World", "Compose")) {
  * Week1 - 6 열과 행 만들기 : 만들 뷰의 안쪽과 수평방향에 패딩 주는 법
  * Week1 - 6 열과 행 만들기 : 버튼 생성하기. Row가 Horizontal LinearLayout, Column이 Vertical LinearLayout이다.
  * Week1 - 7 컴포즈에서의 상태 : state / mutableStateOf - 특정 값을 가지고 있다가 값이 변하면 UI를 변화시켜줌. /
- * Week1 - 7 컴포즈에서의 상태 : remember - state를 기록해 둠으로써 state를 유지시켜준다. 각기 다른 UI마다 다른 값을 기록해둔다.
+ * remember - state를 기록해 둠으로써 state를 유지시켜준다. 각기 다른 UI마다 다른 값을 기록해둔다.
+ * Week1 - 11 컴포즈에서의 애니메이션 : animateDpAsState를 사용한 간단한 애니메이션을 만들 수 있다.
+ * animateDpAsState는 애니메이션이 끝날 때까지 값이 변하는 state를 return한다.
+ * animationSpec을 추가해서 스프링 기반 애니메이션을 만들 수 있다.
  * */
 @Composable
 private fun Greeting(name: String) {
-    val expanded = remember { mutableStateOf(false) }
-    val extraPadding = if(expanded.value) 48.dp else 0.dp
+    var expanded by remember { mutableStateOf(false) }
+
+    val extraPadding by animateDpAsState(
+        if(expanded) 48.dp else 0.dp,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        )
+    )
 
     Surface(color = MaterialTheme.colors.primary,
         modifier = Modifier.padding(vertical = 4.dp, horizontal = 8.dp)) {
         Row(modifier = Modifier.padding(24.dp)) {
             Column(modifier = Modifier
                 .weight(1F)
-                .padding(bottom = extraPadding)) {
+                .padding(bottom = extraPadding.coerceAtLeast(0.dp))) // coerceAtLeast를 추가해서 패딩이 음수가 되지않게 한다.
+            {
                 Text(text = "Hello,")
                 Text(text = name)
             }
             OutlinedButton(
                 onClick = {
-                    expanded.value = expanded.value.not()
+                    expanded = expanded.not()
                 }
             ) {
-                Text( if(expanded.value) "Show less" else "Show More")
+                Text( if(expanded) "Show less" else "Show More")
             }
             
         }
