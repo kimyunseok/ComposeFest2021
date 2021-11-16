@@ -14,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,8 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.*
 import coil.compose.rememberImagePainter
 import com.khs.week2_1.ui.theme.Week2_1Theme
 import kotlinx.coroutines.launch
@@ -32,6 +32,8 @@ import kotlinx.coroutines.launch
 /**
  * 4. 슬롯 API : content: @Composable () -> Unit를 통해서 컴포저블을 정의할 수 있다.
  * 쉽게 말해 빈 공간들에 개발자가 원하는 Content를 넣을 수 있는 곳을 의미한다.
+ *
+ * 9. 뷰는 오른쪽에서 왼쪽 방향으로 갱신된다.
  */
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -60,21 +62,47 @@ class MainActivity : ComponentActivity() {
  * 을 할 수 있다. 만일 한정적으로 사용되는 곳이라면 1을, 여러 곳에서 사용하는 곳이라면 2의 방법을 쓰면 된다.
  *
  * 만일 Chaining Method가 보이지 않는다면 .then()을 사용해보면 된다.
+ *
  */
 val topics = listOf(
     "Arts & Crafts", "Beauty", "Books", "Business", "Comics", "Culinary",
     "Design", "Fashion", "Film", "History", "Maths", "Music", "People", "Philosophy",
     "Religion", "Social sciences", "Technology", "TV", "Writing"
 )
+
+/**
+ * LayoutDirection을 사용하면 컴포저블의 레이아웃 방향을 변경할수 있다.
+ * 원래는 오른쪽에서 왼쪽이지만, 레이아웃 방향을 바꾸면 해당 방향으로 랜더링되지 않는다.
+ * placeRelative : 오른쪽에서 왼쪽으로 compasable을 place한다.
+ * place 혹은 layoutDirection 설정 : 오른쪽에서 왼쪽이 아님.
+ */
 @Composable
-fun BodyContent(modifier: Modifier = Modifier) {
-    Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
-        StaggeredGrid(modifier = modifier, rows = 3) {
+fun BodyContent(modifier: Modifier = Modifier) {4
+    //Row의 사이즈는 처음 200 x 200에서 수직 32dp, 수평 32dp가 추가되어서 232 x 232가 된다.
+    Row(
+        modifier = modifier
+            .background(color = Color.LightGray)
+            .size(200.dp)
+            //.padding(16.dp)
+            .horizontalScroll(rememberScrollState())
+    ) {
+        //padding, scroll 수정자의 속성이 size 속성에 강제된다.
+        // 따라서 StaggerdGrid도 200dp로 제한된다.
+        StaggeredGrid {
             for(topic in topics) {
+                //여기있는 8dp는 전체(Row) 사이즈에는 추가되지 않는다.
                 Chip(modifier = Modifier.padding(8.dp), text = topic)
             }
         }
     }
+
+//    Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
+//        StaggeredGrid(modifier = modifier, rows = 3) {
+//            for(topic in topics) {
+//                Chip(modifier = Modifier.padding(8.dp), text = topic)
+//            }
+//        }
+//    }
 
 //    MyOwnColumn(modifier.padding(8.dp)) {
 //        Text("MyOwnColumn")
@@ -88,6 +116,48 @@ fun BodyContent(modifier: Modifier = Modifier) {
 //        Text(text = "Thanks for going through the Layouts codelab")
 //    }
 
+}
+
+/**
+ * 9. hood 아래에 있는 레이아웃 수정자(modifier)
+ */
+
+//어떻게 수정자를 구현하는지에 대한 내용
+@Stable
+fun Modifier.padding(all: Dp) = this.then(
+    PaddingModifier(start = all, top = all, end = all, bottom = all, rtlAware = true)
+)
+
+//세부 구현사항
+private class PaddingModifier(
+    val start: Dp = 0.dp,
+    val top: Dp = 0.dp,
+    val end: Dp = 0.dp,
+    val bottom: Dp = 0.dp,
+    val rtlAware: Boolean
+) : LayoutModifier {
+    override fun MeasureScope.measure(
+        measurable: Measurable,
+        constraints: Constraints
+    ): MeasureResult {
+        val horizontal = start.roundToPx() + end.roundToPx()
+        val vertical = top.roundToPx() + bottom.roundToPx()
+
+        //offset 메서드는 더해주는 값이다. -된 좌표 값이 placeable한지 확인한다.
+        val placeable = measurable.measure(constraints.offset(-horizontal, -vertical))
+
+        val width = constraints.constrainWidth(placeable.width + horizontal)
+        val height = constraints.constrainHeight(placeable.height + vertical)
+        // 너비는 원래 너비 + 수평 패딩 값, 높이는 원래 높이 + 수직 패딩 값이 된다.
+
+        return layout(width = width, height = height) {
+            if(rtlAware) {
+                placeable.placeRelative(start.roundToPx(), top.roundToPx())
+            } else {
+                placeable.place(start.roundToPx(), top.roundToPx())
+            }
+        }
+    }
 }
 
 /**
