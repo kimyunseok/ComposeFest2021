@@ -120,6 +120,51 @@ fun BodyContent(modifier: Modifier = Modifier) {4
 //    }
 
 }
+/**
+ * 11. Intrinsics(규제)
+ * 컴포즈에서는 자식의 크기를 꼭 한번만 measure해야한다. 두번 할 경우 런타임 예외가 발생한다.
+ * 만일 자식의 크기가 measure되기전에 자식에 대한 정보를 얻고 싶다면 Intrinsics이 도와줄 수 있다.
+ * Composable에게 intrinsicWidth, intrinsicHeight를 요청할 수 있다.
+ * 1. (min|max)IntrinsicWidth : content를 적합하게 그리기 위해, 주어진 너비에서 min / max 너비를 찾는다.
+ * 2. (min|max)IntrinsicHeight : content를 적합하게 그리기 위해, 주어진 높이에서 min / max 너비를 찾는다.
+ * 예를들어, Text에 대한 minIntrinsicHeight에서 무한한 수와 함께 호출했다면, Text의 높이를 return할 것이다.
+ *
+ * 수정자에서 Density.(min|max)Intrinsic(Width|Height)Of를 Override할 수 있다.
+ */
+@Composable
+fun TwoTexts(modifier: Modifier = Modifier, text1: String, text2: String) {
+    //Row에 IntrinsicSize.Min의 높이를 적용하면, 자식들을 나타낼 최소 높이로 레이아웃의 높이가 설정이 된다.
+    //여기서는 Text의 높이가 최소 높이가 된다.
+    Row(modifier = modifier.height(IntrinsicSize.Min)) {
+        Text(
+            modifier = Modifier
+                .weight(1F)
+                .padding(start = 4.dp)
+                .wrapContentWidth(Alignment.Start),
+            text = text1
+        )
+        Divider(color = Color.Black, modifier = Modifier
+            .fillMaxHeight()
+            .width(1.dp))
+        Text(
+            modifier = Modifier
+                .weight(1F)
+                .padding(end = 4.dp)
+                .wrapContentWidth(Alignment.End),
+            text = text2
+        )
+    }
+}
+
+@Preview
+@Composable
+fun TwoTextPreview() {
+    Week2_1Theme {
+        Surface {
+            TwoTexts(text1 = "Hi", text2 = "there")
+        }
+    }
+}
 
 /**
  * 10. 제약 레이아웃 : 복잡한 뷰 구성을 가진 화면을 구성할 때 좋았다.
