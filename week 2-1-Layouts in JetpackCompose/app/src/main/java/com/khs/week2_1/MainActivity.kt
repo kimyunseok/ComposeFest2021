@@ -18,9 +18,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.VerticalAlignmentLine
+import androidx.compose.ui.layout.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberImagePainter
 import com.khs.week2_1.ui.theme.Week2_1Theme
@@ -36,7 +37,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             Week2_1Theme {
                 Surface(color = MaterialTheme.colors.background) {
-                    LazyList()
+                    LayoutsCodelab()
                 }
             }
 
@@ -49,6 +50,84 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
+/**
+ * 7. 커스텀 레이아웃 만들어보기
+ * layout Modifier을 사용한다.
+ * Compose에서는 자식의 크기를 한 번만 잰다.
+ * measurable : 측정되어야하고 놓여져야 할 Child
+ * constraints : child의 최소, 최대 너비와 높이
+ *
+ * 두 가지 Preview의 차이 : 뷰의 위에서 시작한 Padding과, Baseline에서 시작한 Padding
+ */
+@Composable
+fun MyOwnColumn(
+    modifier: Modifier = Modifier,
+    //커스텀 레이아웃 속성
+    content: @Composable () -> Unit
+) {
+    Layout(
+        modifier = modifier,
+        content = content
+    ) {
+        measurables, constraints ->
+
+        // 자식의 뷰들을 더 제한하지말고, 주어진 constraints에서 측정해야 한다.
+        // 자식의 List
+        val placeables = measurables.map {
+            // 각 child를 측정한다.
+            measurable ->
+            measurable.measure(constraints)
+        }
+
+        var yPosition = 0
+
+        //레이아웃을 가능한 크게 만든다.
+        layout(constraints.maxWidth, constraints.maxHeight) {
+            //child들을 놓는다.
+            placeables.forEach{placeable ->
+                placeable.placeRelative(x = 0, y = yPosition)
+
+                yPosition += placeable.height
+            }
+        }
+    }
+}
+
+@Preview
+@Composable
+fun TextWithPaddingToBaselinePreview() {
+    Week2_1Theme {
+        Text(text = "Hi there!", Modifier.firstBaselineToTop(32.dp))
+    }
+}
+@Preview
+@Composable
+fun TextWithNormalPaddingPreview() {
+    Week2_1Theme {
+        Text(text = "Hi there!", Modifier.padding(top = 32.dp))
+    }
+}
+
+fun Modifier.firstBaselineToTop(
+    firstBaselineToTop: Dp
+) = this.then(
+    layout {measurable, constraints ->
+        //처음 해야할 것은 composable의 크기를 측정하는 것이다.
+        val placeable = measurable.measure(constraints = constraints) // 이 메서드로 composable이 (x, y)에 놓여질 수 있는지 여부를 check한다.
+
+        //Composable이 FirstBaseLine이 있는지 여부를 확인한다.
+        check(placeable[FirstBaseline] != AlignmentLine.Unspecified)
+        val firstBaseLine = placeable[FirstBaseline]
+
+        val placeableY = firstBaselineToTop.roundToPx() - firstBaseLine // FirstBaseLine을 제외시켜놓는다.
+        val height = placeable.height + placeableY //패딩이 포함된 Composable의 높이.
+        layout(placeable.width, height) {
+            //Composable이 놓여질 곳
+            placeable.placeRelative(0, placeableY)
+        }
+    }
+)
 
 /**
  * 6. 리스트
@@ -148,9 +227,15 @@ fun LayoutsCodelab() {
  */
 @Composable
 fun BodyContent(modifier: Modifier = Modifier) {
-    Column(modifier = Modifier) {
-        Text(text = "Hi there!")
-        Text(text = "Thanks for going through the Layouts codelab")
+//    Column(modifier = Modifier) {
+//        Text(text = "Hi there!")
+//        Text(text = "Thanks for going through the Layouts codelab")
+//    }
+    MyOwnColumn(modifier.padding(8.dp)) {
+        Text("MyOwnColumn")
+        Text("places items")
+        Text("vertically.")
+        Text("We've done it by hand!")
     }
 }
 
