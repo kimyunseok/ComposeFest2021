@@ -3,12 +3,10 @@ package com.khs.week2_1
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.*
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
@@ -16,13 +14,17 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.VerticalAlignmentLine
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import coil.compose.rememberImagePainter
 import com.khs.week2_1.ui.theme.Week2_1Theme
+import kotlinx.coroutines.launch
 
 /**
  * 4. 슬롯 API : content: @Composable () -> Unit를 통해서 컴포저블을 정의할 수 있다.
@@ -32,12 +34,80 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+            Week2_1Theme {
+                Surface(color = MaterialTheme.colors.background) {
+                    LazyList()
+                }
+            }
+
 //            Week2_1Theme {
 //                // A surface container using the 'background' color from the theme
 //                Surface(color = MaterialTheme.colors.background) {
 //                    PhotographerCard()
 //                }
 //            }
+        }
+    }
+}
+
+/**
+ * 6. 리스트
+ */
+@Composable
+fun ImageListItem(index: Int) {
+    //이미지를 스크롤해보면 알겠지만 화면에 보이는 것만 랜더링 해준다.
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Image(
+            painter = rememberImagePainter(data = "https://developer.android.com/images/brand/Android_Robot.png"),
+            contentDescription = "Android Logo",
+            modifier = Modifier.size(50.dp)
+        )
+        Spacer(modifier = Modifier.width(10.dp))
+        Text(text = "Item #$index", style = MaterialTheme.typography.subtitle1)
+    }
+}
+@Composable
+fun LazyList() {
+    //LazyColumn은 RecyclerView이다. 또한 화면에 보이는 목록만 렌더링하므로 성능을 향상시킨다.
+
+    val listSize = 100
+    val scrollState = rememberLazyListState() // Column은 스크롤 상태를 저장해주지 않는다.
+    val coroutineScope = rememberCoroutineScope() // 스크롤 동작을 비동기로 처리하기 위한 코루틴.
+
+    Column {
+        Row {
+            Button(onClick = {
+                coroutineScope.launch {
+                    scrollState.animateScrollToItem(0)
+                }
+            }) {
+                Text(text = "Scroll to the top")
+            }
+
+            Button(onClick = {
+                coroutineScope.launch {
+                    scrollState.animateScrollToItem(listSize - 1)
+                }
+            }) {
+                Text(text = "Scroll to the Bottom")
+            }
+        }
+
+        LazyColumn(state = scrollState) {
+            items(100) {
+                ImageListItem(it)
+            }
+        }
+    }
+
+}
+@Composable
+fun SimpleList() {
+    val scrollState = rememberScrollState() // Column은 스크롤 상태를 저장해주지 않는다.
+
+    Column(modifier = Modifier.verticalScroll(scrollState)) {
+        repeat(100) {
+            Text(text = "Item #$it")
         }
     }
 }
