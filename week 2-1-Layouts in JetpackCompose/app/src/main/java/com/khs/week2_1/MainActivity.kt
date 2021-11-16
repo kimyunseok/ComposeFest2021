@@ -18,6 +18,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.focusModifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -52,6 +54,130 @@ class MainActivity : ComponentActivity() {
 }
 
 /**
+ * 만일 재사용할 수 있는 Composable에 Padding을 주고 싶다면?
+ * 1. 선언한 곳의 Modifier에서 수정
+ * 2. 호출하는 곳의 Modifier에서 수정
+ * 을 할 수 있다. 만일 한정적으로 사용되는 곳이라면 1을, 여러 곳에서 사용하는 곳이라면 2의 방법을 쓰면 된다.
+ *
+ * 만일 Chaining Method가 보이지 않는다면 .then()을 사용해보면 된다.
+ */
+val topics = listOf(
+    "Arts & Crafts", "Beauty", "Books", "Business", "Comics", "Culinary",
+    "Design", "Fashion", "Film", "History", "Maths", "Music", "People", "Philosophy",
+    "Religion", "Social sciences", "Technology", "TV", "Writing"
+)
+@Composable
+fun BodyContent(modifier: Modifier = Modifier) {
+    Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
+        StaggeredGrid(modifier = modifier, rows = 3) {
+            for(topic in topics) {
+                Chip(modifier = Modifier.padding(8.dp), text = topic)
+            }
+        }
+    }
+
+//    MyOwnColumn(modifier.padding(8.dp)) {
+//        Text("MyOwnColumn")
+//        Text("places items")
+//        Text("vertically.")
+//        Text("We've done it by hand!")
+//    }
+
+//    Column(modifier = Modifier) {
+//        Text(text = "Hi there!")
+//        Text(text = "Thanks for going through the Layouts codelab")
+//    }
+
+}
+
+/**
+ * 8. 복잡한 사용자 지정 레이아웃
+ */
+@Composable
+fun Chip(modifier: Modifier = Modifier, text: String) {
+    Card(
+        modifier = modifier,
+        border = BorderStroke(color = Color.Black, width = Dp.Hairline),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Row (modifier = Modifier.padding(start = 8.dp, top = 4.dp, end = 8.dp, bottom = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box (
+                Modifier
+                    .size(16.dp, 16.dp)
+                    .background(color = MaterialTheme.colors.secondary)
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(text = text)
+        }
+    }
+}
+@Preview
+@Composable
+fun ChipPreview() {
+    Week2_1Theme {
+        Chip(text = "Hi there")
+    }
+}
+
+@Composable
+fun StaggeredGrid(
+    modifier: Modifier = Modifier,
+    rows: Int = 3,
+    content: @Composable () -> Unit
+) {
+    Layout(modifier = modifier, content = content) {
+            measurables, constraints ->
+        //자녀는 한 번만 측정 가능.
+
+        val rowWidths = IntArray(rows) { 0 } // 각 행의 너비를 기록
+
+        val rowHeights = IntArray(rows) { 0 } // 각 행의 높이를 기록
+
+        //측정된 자식들의 리스트
+        val placeables = measurables.mapIndexed {
+                index, measurable ->
+
+            // 자식 측정
+            val placeable = measurable.measure(constraints = constraints)
+
+            // 각 행의 최대 너비와 높이를 저장한다.
+            val row = index % rows
+            rowWidths[row] += placeable.width
+            rowHeights[row] = Math.max(rowHeights[row], placeable.height)
+
+            placeable
+        }
+
+        // 그리드의 너비는 가장 긴 너비이다.
+        val width = rowWidths.maxOrNull()?.coerceIn(constraints.minWidth.rangeTo(constraints.maxWidth)) ?: constraints.minWidth
+
+        // 그리드의 높이는 각 행마다 가장 큰 원소들의 합이다. (각 행마다 가장 큰 원소가 그 행의 높이이므로)
+        val height = rowHeights.sumOf { it }.coerceIn(constraints.minHeight.rangeTo(constraints.maxHeight))
+
+        //각 뷰가 그려질 높이는 높이를 계속 중첩시켜서 더해주는 것과 같다.
+        val rowY = IntArray(rows) { 0 }
+        for(i in 1 until rows) {
+            rowY[i] = rowY[i - 1] + rowHeights[i - 1]
+        }
+
+        layout(width, height) {
+            val rowX = IntArray(rows) { 0 }
+
+            placeables.forEachIndexed {index, placeable ->
+                val row = index % rows
+                placeable.placeRelative(
+                    x = rowX[row],
+                    y = rowY[row]
+                )
+                rowX[row] += placeable.width
+            }
+        }
+    }
+}
+
+/**
  * 7. 커스텀 레이아웃 만들어보기
  * layout Modifier을 사용한다.
  * Compose에서는 자식의 크기를 한 번만 잰다.
@@ -70,13 +196,13 @@ fun MyOwnColumn(
         modifier = modifier,
         content = content
     ) {
-        measurables, constraints ->
+            measurables, constraints ->
 
         // 자식의 뷰들을 더 제한하지말고, 주어진 constraints에서 측정해야 한다.
         // 자식의 List
         val placeables = measurables.map {
             // 각 child를 측정한다.
-            measurable ->
+                measurable ->
             measurable.measure(constraints)
         }
 
@@ -214,28 +340,6 @@ fun LayoutsCodelab() {
 //            Text(text = "Hi there!")
 //            Text(text = "Thanks for going through the Layouts codelab")
 //        }
-    }
-}
-
-/**
- * 만일 재사용할 수 있는 Composable에 Padding을 주고 싶다면?
- * 1. 선언한 곳의 Modifier에서 수정
- * 2. 호출하는 곳의 Modifier에서 수정
- * 을 할 수 있다. 만일 한정적으로 사용되는 곳이라면 1을, 여러 곳에서 사용하는 곳이라면 2의 방법을 쓰면 된다.
- *
- * 만일 Chaining Method가 보이지 않는다면 .then()을 사용해보면 된다.
- */
-@Composable
-fun BodyContent(modifier: Modifier = Modifier) {
-//    Column(modifier = Modifier) {
-//        Text(text = "Hi there!")
-//        Text(text = "Thanks for going through the Layouts codelab")
-//    }
-    MyOwnColumn(modifier.padding(8.dp)) {
-        Text("MyOwnColumn")
-        Text("places items")
-        Text("vertically.")
-        Text("We've done it by hand!")
     }
 }
 
