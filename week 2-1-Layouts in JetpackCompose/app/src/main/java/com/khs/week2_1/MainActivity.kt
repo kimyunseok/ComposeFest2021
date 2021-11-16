@@ -25,6 +25,9 @@ import androidx.compose.ui.layout.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.*
+import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.constraintlayout.compose.ConstraintSet
+import androidx.constraintlayout.compose.Dimension
 import coil.compose.rememberImagePainter
 import com.khs.week2_1.ui.theme.Week2_1Theme
 import kotlinx.coroutines.launch
@@ -116,6 +119,144 @@ fun BodyContent(modifier: Modifier = Modifier) {4
 //        Text(text = "Thanks for going through the Layouts codelab")
 //    }
 
+}
+
+/**
+ * 10. 제약 레이아웃 : 복잡한 뷰 구성을 가진 화면을 구성할 때 좋았다.
+ * 하지만 컴포즈에서는 제약 레이아웃은 권장되지 않는다.
+ * 1. 다른 뷰 참조는 createRefs()(createRef()) 메서드를 사용해서 만들어진다. 제약 레이아웃에 있는 각 Composable들은 연관된 참조를 가지고 있어야 한다.
+ * 2. 제약(Constraints)은 매개변수로써 참조를 만들고 제약을 lambda형태로 만들 수 있게 해주는 constrainAS를 사용하는 수정자를 통해서 제공된다.
+ * 3. 제약은 linkTo 혹은 다른 메서드들에 의해 특정된다.
+ * 4. parent는 제약을 특정하기위해 사용되어지는 존재하는 참조이다.(ConstraintsLayout composable 그 자체)
+ *
+ * 사이즈는 최초에는 wrap contentdl이다. 이를 수정하려면 fillMaxSize 또는 size 속성을 이용해서 수정해야 한다.
+ */
+@Composable
+fun DecoupledConstraintLayout() {
+    //제약 레이아웃에서 컴포저블과 분리된 상태로 유지하려면 어떻게 해야할 까?
+    //일반적인 예시로는 화면 구성을 기반으로 제약 조건을  쉽게 변경하거나, 2개의 제약 조건 세트 간의 애니메이션을 적용하는 것이다.
+    //할 수 있는 방법은 1. 제약 레이아웃에 매개변수로 constraints를 넘겨주기. / 2. layoutId를 사용해서 ConstraintSet에서 만들어진 참조들을 할당하기.
+    BoxWithConstraints {
+        val constraints = if(maxWidth < maxHeight) {
+            decoupledConstraints(margin = 16.dp)
+        } else {
+            decoupledConstraints(margin = 32.dp)
+        }
+
+        ConstraintLayout(constraints) {
+            Button(onClick = { /*Do Something*/ },
+                Modifier.layoutId("button")
+            ) {
+                Text(text = "Button")
+            }
+
+            Text("Text", Modifier.layoutId("text"))
+        }
+    }
+}
+
+private fun decoupledConstraints(margin: Dp): ConstraintSet {
+    return ConstraintSet {
+        val button = createRefFor("button")
+        val text = createRefFor("text")
+
+        constrain(button) {
+            top.linkTo(parent.top, margin = margin)
+        }
+        constrain(text) {
+            top.linkTo(button.bottom, margin)
+        }
+    }
+}
+
+@Composable
+fun ConstraintLayoutContent() {
+//    ConstraintLayout {
+//        //제약 레이아웃에서는 텍스트가 길면 화면에서 짤릴수가 있다.
+//        val text = createRef()
+//
+//        val guideLine = createGuidelineFromStart(fraction = 0.5F)
+//        Text("This is a very very very very very very very long text",
+//            Modifier.constrainAs(text) {
+//                linkTo(start = guideLine, end = parent.end)
+//                //화면에 짤리지 않게 하기 위해 아래 속성을 추가한다.
+//                width = Dimension.preferredWrapContent
+//
+//                //Dimension 관련 속성에는 다음과 같은 것들이 있다.
+//                //1. preferredWrapContent : 레이아웃은 부모의 제약 조건 내에서 wrap content이다.
+//                //2. wrap content : 제약 조건 범위 밖이라도 콘텐츠를 줄바꿈 한다.
+//                //3. fillToConstraints : 레이아웃이 제약에 정의된 공간을 채우기위해 dimension으로 확장된다.
+//                //4. preferredValue  : 레이아웃이 제약 조건을 갖추기 위해 고정된 dp값을 갖는다.
+//                //5. value : 제약 조건에 상관 없는 고정된 dp값을 갖는다.
+//                //또한 특정 Dimension은 Dimension.preferredWrapContent.atLeast(100.dp)과 같은 속성을 가질 수도 있다.
+//            }
+//        )
+//    }
+
+//    ConstraintLayout {
+//        val (button1, button2, text) = createRefs()
+//
+//        Button(
+//            onClick = {/* DO Something */},
+//            modifier = Modifier.constrainAs(button1) {
+//                top.linkTo(parent.top, margin = 16.dp)
+//            }
+//        ) {
+//            Text("Button1")
+//        }
+//        Text(
+//            "Text", modifier = Modifier.constrainAs(text) {
+//                top.linkTo(button1.bottom, margin = 16.dp)
+//
+//                centerAround(button1.end)
+//            }
+//        )
+//        //DSL은 가이드라인, 배리어, chain을 제공한다.
+//        val barrier = createEndBarrier(button1, text) // button1의 끝, text의 끝에 barrier를 만들어 놓는다.
+//        //배리어는 ConstraintsLayout의 body에 생긴다. constrainAs에서 생기는 것이 아니다.
+//
+//        Button(
+//            onClick = {/* DO Something */},
+//            modifier = Modifier.constrainAs(button2) {
+//                top.linkTo(parent.top, margin = 16.dp)
+//                start.linkTo(barrier)
+//                // linkTo를 배리어에 연결지을 수 있다.
+//            }
+//        ) {
+//            Text("Button2")
+//        }
+//    }
+
+//    ConstraintLayout {
+//        val (button, text) = createRefs()
+//
+//        Button(
+//            onClick = {/* DO Something */},
+//
+//            //'button'에 대한 참조를 수정자의 constrainAS 속성을 통해서 설정한다. 부모(ConstraintsLayout)의 위로 linkTo를 한다.
+//            modifier = Modifier.constrainAs(button) {
+//                top.linkTo(parent.top, margin = 16.dp)
+//            }
+//        ) {
+//            Text("Button")
+//        }
+//
+//        Text(
+//            "Text", modifier = Modifier.constrainAs(text) {
+//                top.linkTo(button.bottom, margin = 16.dp)
+//
+//                centerHorizontallyTo(parent) // 부모 기준 가운데로 정렬시킨다.
+//            }
+//        )
+//    }
+}
+
+@Preview
+@Composable
+fun ConstraintLayoutContentPreview() {
+    Week2_1Theme {
+        ConstraintLayoutContent()
+    }
 }
 
 /**
