@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
@@ -30,26 +32,63 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            Week2_1Theme {
-                // A surface container using the 'background' color from the theme
-                Surface(color = MaterialTheme.colors.background) {
-                    PhotographerCard()
-                }
-            }
+//            Week2_1Theme {
+//                // A surface container using the 'background' color from the theme
+//                Surface(color = MaterialTheme.colors.background) {
+//                    PhotographerCard()
+//                }
+//            }
         }
     }
 }
 
+/**
+ * 5. Material Components - Scaffold : 다양한 슬롯들을 제공해주고, Material Components중에 가장 높은 레벨이다.
+ */
 @Composable
-fun Greeting(name: String) {
-    Text(text = "Hello $name!")
+fun LayoutsCodelab() {
+    Scaffold (
+        topBar = { // Scaffold에는 topBar라는 AppBar속성이 존재한다. 슬롯 API(@Composable () -> Unit 유형)이기 때문에 우리가 원하는 컴포저블로 채울 수 있다.
+            TopAppBar(
+                title = {Text(text = "LayoutsCodelab")},
+                actions = { // actions는 Row방향이므로 수평으로 아이콘들이 추가된다.
+                    IconButton(onClick = { /*TODO*/ }) {
+                        Icon(Icons.Filled.Favorite, contentDescription = null)
+                    }
+                }
+            )
+        }
+    ) { innerPadding ->
+        BodyContent(Modifier.padding(innerPadding))
+        //코드 재사용성을 높일 수 있다.
+//        Column(modifier = Modifier.padding(innerPadding)) {
+//            Text(text = "Hi there!")
+//            Text(text = "Thanks for going through the Layouts codelab")
+//        }
+    }
 }
 
-@Preview(showBackground = true)
+/**
+ * 만일 재사용할 수 있는 Composable에 Padding을 주고 싶다면?
+ * 1. 선언한 곳의 Modifier에서 수정
+ * 2. 호출하는 곳의 Modifier에서 수정
+ * 을 할 수 있다. 만일 한정적으로 사용되는 곳이라면 1을, 여러 곳에서 사용하는 곳이라면 2의 방법을 쓰면 된다.
+ *
+ * 만일 Chaining Method가 보이지 않는다면 .then()을 사용해보면 된다.
+ */
 @Composable
-fun DefaultPreview() {
+fun BodyContent(modifier: Modifier = Modifier) {
+    Column(modifier = Modifier) {
+        Text(text = "Hi there!")
+        Text(text = "Thanks for going through the Layouts codelab")
+    }
+}
+
+@Preview
+@Composable
+fun LayoutsCodelabPreview() {
     Week2_1Theme {
-        Greeting("Android")
+        LayoutsCodelab()
     }
 }
 
@@ -81,7 +120,7 @@ fun PhotographerCard(modifier: Modifier = Modifier) {
             modifier = Modifier
                 .padding(start = 8.dp)
                 .align(Alignment.CenterVertically)
-                ){
+        ){
             Text("Alfred Sisely", fontWeight = FontWeight.Bold)
             CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
                 //Week 2-1 - 3. 수정자 : CompositionLocalProvider를 통해서 글자의 투명도(Alpha) 설정.
