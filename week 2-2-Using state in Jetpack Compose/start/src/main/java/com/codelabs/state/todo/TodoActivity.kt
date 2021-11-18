@@ -30,6 +30,9 @@ import com.codelabs.state.ui.StateCodelabTheme
  * State – 시간에 따라 바뀔 수 있는 모든 값
  * Event – 프로그램에서 발생한 일련의 사건(동작).
  * Unidirectional data flow – 이벤트는 위로가고 상태는 내려오는 데이터 흐름.
+ * 대체로
+ * 부모 ->(State) 자식
+ * 자식 ->(Event) 부모
  */
 class TodoActivity : AppCompatActivity() {
 

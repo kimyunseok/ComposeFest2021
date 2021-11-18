@@ -27,7 +27,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -49,6 +51,10 @@ fun TodoScreen(
     onRemoveItem: (TodoItem) -> Unit
 ) {
     Column {
+        TodoItemInputBackground(elevate = true, modifier = Modifier.fillMaxWidth()) {
+            TodoItemInput(onItemComplete = onAddItem)
+        }
+        
         LazyColumn(
             modifier = Modifier.weight(1f),
             contentPadding = PaddingValues(top = 8.dp)
@@ -73,6 +79,65 @@ fun TodoScreen(
         }
     }
 }
+/**
+ * 6. State In Compose
+ * stateful composable : 시간이 지남에 따라 변하는 State를 소유한 Composable. 값의 중복을 막을 수 있다.
+ *
+ * MutableState : MutableLiveData와 유사하다. 그러나 런타임에 MutableState는 통합이 된다.
+ * 1. val state = remember { mutableStateOf(default) }
+ * 2. var value by remember { mutableStateOf(default) }
+ * 3. val (value, setValue) = remember { mutableStateOf(default) }
+ *
+ * TodoItemInput ->(state) TodoInputTextField
+ * TodoInputTextField ->(event) TodoItemInput
+ * 의 방식이 되어야 한다. TodoItemInput이 Parent, TodoInputTextField이 Child.
+ * TodoInputTextField의 State를 부모에 넘겨줘야 한다. 이를 State Hoisting이라고 한다.
+ * State Hoisting의 특징
+ * 1. 값이 복제될 필요 없이, 해당 State의 값의 원천이 하나만 존재하게 된다.
+ * 2. 캡슐화 : 다른 Composable들이 Event를 보내와도 해당 State는 특정 Composable만 Control이 가능하다.
+ * 3. Shareable : Hosited State는 Immutable Value로 다른 Composable들과 공유가 가능하다.
+ * 4. Interceptable : 부모는 Child의 State가 바뀌기 전에 이벤트들을 무시하거나 수정할 수 있다.
+ * 5. Decoupled : Child의 State가 모든 곳에서 저장될 수 있다. 예시로 Room DB를 써서 해당 상태로 돌아오는 것이 가능하다.
+ */
+@Composable
+fun TodoItemInput(onItemComplete: (TodoItem) -> Unit) {
+    val (text, setText) = remember { mutableStateOf("")} // State Hoist
+
+    //람다를 넘겨주는 방식은 Compose에서 Event를 특정짓는 일반적인 방법이다.
+    Column {
+        Row(
+            Modifier
+                .padding(horizontal = 16.dp)
+                .padding(top = 16.dp)
+        )
+        {
+            //아래와 같은 구조에서는 text를 TodoInputTextField, TodoEditButton에서 사용했다.
+            // State Hoist의 Shareable한 특징이다.
+            TodoInputTextField(
+                text = text,
+                onTextChange = setText,
+                Modifier
+                    .weight(1F)
+                    .padding(end = 8.dp)
+            )
+            TodoEditButton(
+                onClick = {
+                    onItemComplete(TodoItem(text))
+                    setText("")
+                },
+                text = "Add",
+                modifier = Modifier.align(Alignment.CenterVertically),
+                enabled = text.isNotBlank())
+        }
+    }
+}
+
+@Composable
+fun TodoInputTextField(text: String, onTextChange: (String) -> Unit, modifier: Modifier) {
+    //val (text, setText) = remember { mutableStateOf("") State Hoisting을 하려면 뷰 내부에서 호출하면 안된다.
+    TodoInputText(text = text, onTextChange = onTextChange, modifier)
+    //위 방식은 remember를 사용하지만, 자기 자신의 메모리에 사용하고 있다.
+}
 
 /**
  * Stateless composable that displays a full-width [TodoItem].
@@ -95,7 +160,7 @@ fun TodoScreen(
 fun TodoRow(todo: TodoItem, onItemClicked: (TodoItem) -> Unit,
             modifier: Modifier = Modifier,
             iconAlpha: Float = remember(todo.id) { randomTint()}) {
-            //iconAlpha를 매개변수로 넘김으로써, 값을 특정지을 수 있게된다.
+    //iconAlpha를 매개변수로 넘김으로써, 값을 특정지을 수 있게된다.
     Row(
         modifier = modifier
             .clickable { onItemClicked(todo) }
