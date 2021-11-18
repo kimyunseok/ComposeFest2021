@@ -47,9 +47,9 @@ fun TodoScreen(
 ) {
     Column {
         TodoItemInputBackground(elevate = true, modifier = Modifier.fillMaxWidth()) {
-            TodoItemInput(onItemComplete = onAddItem)
+            TodoItemEntryInput(onItemComplete = onAddItem)
         }
-        
+
         LazyColumn(
             modifier = Modifier.weight(1f),
             contentPadding = PaddingValues(top = 8.dp)
@@ -93,9 +93,16 @@ fun TodoScreen(
  * 3. Shareable : Hosited State는 Immutable Value로 다른 Composable들과 공유가 가능하다.
  * 4. Interceptable : 부모는 Child의 State가 바뀌기 전에 이벤트들을 무시하거나 수정할 수 있다.
  * 5. Decoupled : Child의 State가 모든 곳에서 저장될 수 있다. 예시로 Room DB를 써서 해당 상태로 돌아오는 것이 가능하다.
+ *
+ * 2 - 2 - 8. Extracting stateless Composables :
+ * https://developer.android.com/codelabs/jetpack-compose-state?authuser=4&continue=https%3A%2F%2Fdeveloper.android.com%2Fcourses%2Fpathways%2Fcompose%3Fhl%3Den%26authuser%3D4%23codelab-https%3A%2F%2Fdeveloper.android.com%2Fcodelabs%2Fjetpack-compose-state&hl=en#7
+ * 참조. Stateless한 Composable을 Stateful하게 만든다.
+ * 이 예시에서는 TodoItemInput ->(Event) TodoScreen였는데, TodoItemInput을 나누어서
+ * TodoItemEntryInput ->(Event) TodoItemInput로 만들었다.
+ * 수정 기능을 추가하기 위함이다.
  */
 @Composable
-fun TodoItemInput(onItemComplete: (TodoItem) -> Unit) {
+fun TodoItemEntryInput(onItemComplete: (TodoItem) -> Unit) {
     val (text, setText) = remember { mutableStateOf("")} // State Hoist
     val (icon, setIcon) = remember { mutableStateOf( TodoIcon.Default) }
     val iconVisible = text.isNotBlank() // iconVisible은 text에 Mapping되어 있기 때문에 상관없다.
@@ -109,6 +116,25 @@ fun TodoItemInput(onItemComplete: (TodoItem) -> Unit) {
     }
 
     //람다를 넘겨주는 방식은 Compose에서 Event를 특정짓는 일반적인 방법이다.
+    TodoItemInput(
+        text = text,
+        onTextChange = setText,
+        icon = icon,
+        onIconChange = setIcon,
+        submit = submit,
+        iconVisible = iconVisible
+    )
+}
+
+@Composable
+fun TodoItemInput(
+    text: String,
+    onTextChange: (String) -> Unit,
+    icon: TodoIcon,
+    onIconChange: (TodoIcon) -> Unit,
+    submit: () -> Unit,
+    iconVisible: Boolean
+) {
     Column {
         Row(
             Modifier
@@ -120,23 +146,28 @@ fun TodoItemInput(onItemComplete: (TodoItem) -> Unit) {
             // State Hoist의 Shareable한 특징이다.
             TodoInputText(
                 text = text,
-                onTextChange = setText,
+                onTextChange = onTextChange,
                 Modifier
                     .weight(1F)
                     .padding(end = 8.dp),
                 onImeAction = submit // Callback
-            // 키보드 관련해서 TextField는, (TodoComponents에 선언된 TodoInputText에 아래가 설정돼 있다.)
-            // 1. keyboardOptions : Ime 액션이 끝났다는 것을 보여주는 데 사용
-            // 2. keyboardActions : 특정 Ime 작업에 대한 응답으로 트리거할 작업을 지정하는데 사용됨. 여기서는 submit 콜백이 사용됐다
+                // 키보드 관련해서 TextField는, (TodoComponents에 선언된 TodoInputText에 아래가 설정돼 있다.)
+                // 1. keyboardOptions : Ime 액션이 끝났다는 것을 보여주는 데 사용
+                // 2. keyboardActions : 특정 Ime 작업에 대한 응답으로 트리거할 작업을 지정하는데 사용됨. 여기서는 submit 콜백이 사용됐다
             )
             TodoEditButton(
                 onClick = submit, // Callback
                 text = "Add",
                 modifier = Modifier.align(Alignment.CenterVertically),
-                enabled = text.isNotBlank())
+                enabled = text.isNotBlank()
+            )
         }
-        if(iconVisible) {
-            AnimatedIconRow(icon = icon, onIconChange = setIcon, modifier = Modifier.padding(top = 8.dp))
+        if (iconVisible) {
+            AnimatedIconRow(
+                icon = icon,
+                onIconChange = onIconChange,
+                modifier = Modifier.padding(top = 8.dp)
+            )
         } else {
             Spacer(modifier = Modifier.height(16.dp))
         }
