@@ -100,6 +100,11 @@ fun TodoScreen(
  * 이 예시에서는 TodoItemInput ->(Event) TodoScreen였는데, TodoItemInput을 나누어서
  * TodoItemEntryInput ->(Event) TodoItemInput로 만들었다.
  * 수정 기능을 추가하기 위함이다.
+ *
+ * 2 - 2 - 9. Use State In ViewModel :
+ * 1. State가 호이스팅되기 위해서는 최소한 해당 State를 사용하는 최소단위 부모에게까지 호이스팅 되어야 한다.
+ * 2. State는 최소한 값이 수정되는 최대 레벨까지 호이스팅 되어져야 한다.
+ * 3. 만일 같은 이벤트에서 호이스팅되는 State가 두 가지 이상이라면, 동시에 호이스팅 되어져야 한다.
  */
 @Composable
 fun TodoItemEntryInput(onItemComplete: (TodoItem) -> Unit) {

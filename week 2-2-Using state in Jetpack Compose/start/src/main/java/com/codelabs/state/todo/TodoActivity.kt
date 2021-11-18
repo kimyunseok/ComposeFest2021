@@ -60,8 +60,8 @@ class TodoActivity : AppCompatActivity() {
      */
     @Composable
     private fun TodoActivityScreen(todoViewModel: TodoViewModel) {
-        val items: List<TodoItem> by todoViewModel.todoItems.observeAsState(listOf())
-        TodoScreen(items = items,
+        TodoScreen(
+            items = todoViewModel.todoItems,
             //아래 두 개가 events up! 코틀린 람다 형태로 전달된다.
             onAddItem = {todoViewModel.addItem(it)},
             onRemoveItem = {todoViewModel.removeItem(it)}
