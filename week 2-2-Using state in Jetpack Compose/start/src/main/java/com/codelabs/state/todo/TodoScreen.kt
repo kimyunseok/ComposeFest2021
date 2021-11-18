@@ -17,12 +17,7 @@
 package com.codelabs.state.todo
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
@@ -102,6 +97,16 @@ fun TodoScreen(
 @Composable
 fun TodoItemInput(onItemComplete: (TodoItem) -> Unit) {
     val (text, setText) = remember { mutableStateOf("")} // State Hoist
+    val (icon, setIcon) = remember { mutableStateOf( TodoIcon.Default) }
+    val iconVisible = text.isNotBlank() // iconVisible은 text에 Mapping되어 있기 때문에 상관없다.
+    //val iconsVisible: LiveData<Boolean> = textLiveData.map { it.isNotBlank() } 의 형태와 같음.
+
+    //코드 재사용을 위해 아래와같이 Lambda의 형태로 만들어준다.
+    val submit = {
+        onItemComplete(TodoItem(text))
+        setIcon(TodoIcon.Default) // 아이콘 선택을 기본 네모 모양으로 Reset해준다.
+        setText("")
+    }
 
     //람다를 넘겨주는 방식은 Compose에서 Event를 특정짓는 일반적인 방법이다.
     Column {
@@ -113,21 +118,27 @@ fun TodoItemInput(onItemComplete: (TodoItem) -> Unit) {
         {
             //아래와 같은 구조에서는 text를 TodoInputTextField, TodoEditButton에서 사용했다.
             // State Hoist의 Shareable한 특징이다.
-            TodoInputTextField(
+            TodoInputText(
                 text = text,
                 onTextChange = setText,
                 Modifier
                     .weight(1F)
-                    .padding(end = 8.dp)
+                    .padding(end = 8.dp),
+                onImeAction = submit // Callback
+            // 키보드 관련해서 TextField는, (TodoComponents에 선언된 TodoInputText에 아래가 설정돼 있다.)
+            // 1. keyboardOptions : Ime 액션이 끝났다는 것을 보여주는 데 사용
+            // 2. keyboardActions : 특정 Ime 작업에 대한 응답으로 트리거할 작업을 지정하는데 사용됨. 여기서는 submit 콜백이 사용됐다
             )
             TodoEditButton(
-                onClick = {
-                    onItemComplete(TodoItem(text))
-                    setText("")
-                },
+                onClick = submit, // Callback
                 text = "Add",
                 modifier = Modifier.align(Alignment.CenterVertically),
                 enabled = text.isNotBlank())
+        }
+        if(iconVisible) {
+            AnimatedIconRow(icon = icon, onIconChange = setIcon, modifier = Modifier.padding(top = 8.dp))
+        } else {
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
