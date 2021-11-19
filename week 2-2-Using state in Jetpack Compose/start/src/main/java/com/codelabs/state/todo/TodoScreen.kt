@@ -104,6 +104,13 @@ fun TodoScreen(
 }
 
 /**
+ * 2-2 12. Use Slots to pass sections of the screen
+ * Slots : 호출하는 쪽에서 Composable에게 화면의 일부를 선택하고 Parameter로 전달한다.
+ * @Composable () -> Unit의 형태로 매개변수에서 선언된다.
+ * Slot은 Stateless한 Composable에 파라미터가 무수히 많아지는 것을 방지할 때 고려해보기 좋다.
+ */
+
+/**
  * 2-2 - 11. Reuse stateless Composables :
  * 이전에 Stateful한 TodoItemInput을 Stateless하게 만들었으므로 이 Stateless한 Composable을 사용할 수 있게된다.
  * Stateful : 내부적으로 상태를 직접 가지고 있는 Composable. 대부분 remember를 사용한다.
@@ -122,10 +129,28 @@ fun TodoItemInlineEditor(
     icon = item.icon,
     onIconChange = {onEditItemChange(item.copy(icon = it))},
     submit = onEditDone,
-    iconVisible = true
+    iconVisible = true,
+    buttonSlot = {
+        Row {
+            val shrinkButtons = Modifier.widthIn(20.dp)
+            TextButton(onClick = onEditDone, modifier = shrinkButtons) {
+                Text(
+                    "\uD83D\uDCBE", // floppy disk
+                    textAlign = TextAlign.End,
+                    modifier = Modifier.width(30.dp)
+                )
+            }
+            TextButton(onClick = onRemoveItem, modifier = shrinkButtons) {
+                Text(
+                    text = "❌",
+                    textAlign = TextAlign.End,
+                    modifier = Modifier.width(30.dp)
+                )
+            }
+        }
+    }
 //copy() 메서드는 Data Class에서 사용가능하다. 해당 인스턴스를 복사한 후에 파라미터에 있는 값을 변경해준다.
 )
-
 /**
  * 6. State In Compose
  * stateful composable : 시간이 지남에 따라 변하는 State를 소유한 Composable. 값의 중복을 막을 수 있다.
@@ -162,14 +187,15 @@ fun TodoItemInlineEditor(
 fun TodoItemEntryInput(onItemComplete: (TodoItem) -> Unit) { // Stateful
     val (text, setText) = remember { mutableStateOf("")}
     val (icon, setIcon) = remember { mutableStateOf( TodoIcon.Default) }
-    val iconVisible = text.isNotBlank() // iconVisible은 text에 Mapping되어 있기 때문에 상관없다.
     //val iconsVisible: LiveData<Boolean> = textLiveData.map { it.isNotBlank() } 의 형태와 같음.
 
     //코드 재사용을 위해 아래와같이 Lambda의 형태로 만들어준다.
     val submit = {
-        onItemComplete(TodoItem(text, icon))
-        setIcon(TodoIcon.Default) // 아이콘 선택을 기본 네모 모양으로 Reset해준다.
-        setText("")
+        if(text.isNotBlank()) {
+            onItemComplete(TodoItem(text, icon))
+            setIcon(TodoIcon.Default) // 아이콘 선택을 기본 네모 모양으로 Reset해준다.
+            setText("")
+        }
     }
 
     //람다를 넘겨주는 방식은 Compose에서 Event를 특정짓는 일반적인 방법이다.
@@ -179,8 +205,11 @@ fun TodoItemEntryInput(onItemComplete: (TodoItem) -> Unit) { // Stateful
         icon = icon, // State Hoist
         onIconChange = setIcon,
         submit = submit,
-        iconVisible = iconVisible
-    )
+        iconVisible = text.isNotBlank()
+    ) {
+        //마지막 매개변수는 람다 형태로 사용 가능하다.
+        TodoEditButton(onClick = submit, text = "Add", enabled = text.isNotBlank())
+    }
 }
 
 @Composable
@@ -190,7 +219,8 @@ fun TodoItemInput(
     icon: TodoIcon,
     onIconChange: (TodoIcon) -> Unit,
     submit: () -> Unit,
-    iconVisible: Boolean
+    iconVisible: Boolean,
+    buttonSlot: @Composable () -> Unit // 추가냐, 수정이냐에 따라 다른 버튼이 나오도록 이 부분을 수정할 것이다.
 ) { // Stateless,
     Column {
         Row(
@@ -212,12 +242,17 @@ fun TodoItemInput(
                 // 1. keyboardOptions : Ime 액션이 끝났다는 것을 보여주는 데 사용
                 // 2. keyboardActions : 특정 Ime 작업에 대한 응답으로 트리거할 작업을 지정하는데 사용됨. 여기서는 submit 콜백이 사용됐다
             )
-            TodoEditButton(
-                onClick = submit, // Callback
-                text = "Add",
-                modifier = Modifier.align(Alignment.CenterVertically),
-                enabled = text.isNotBlank()
-            )
+
+            Spacer(modifier = Modifier.width(8.dp))
+            Box(modifier = Modifier.align(Alignment.CenterVertically)) { buttonSlot() }
+
+            //TodoEdit버튼 코드를 대체한다.
+//            TodoEditButton(
+//                onClick = submit, // Callback
+//                text = "Add",
+//                modifier = Modifier.align(Alignment.CenterVertically),
+//                enabled = text.isNotBlank()
+//            )
         }
         if (iconVisible) {
             AnimatedIconRow(
