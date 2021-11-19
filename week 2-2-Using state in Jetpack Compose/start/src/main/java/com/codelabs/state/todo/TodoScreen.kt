@@ -116,7 +116,7 @@ fun TodoItemEntryInput(onItemComplete: (TodoItem) -> Unit) { // Stateful
 
     //코드 재사용을 위해 아래와같이 Lambda의 형태로 만들어준다.
     val submit = {
-        onItemComplete(TodoItem(text))
+        onItemComplete(TodoItem(text, icon))
         setIcon(TodoIcon.Default) // 아이콘 선택을 기본 네모 모양으로 Reset해준다.
         setText("")
     }
