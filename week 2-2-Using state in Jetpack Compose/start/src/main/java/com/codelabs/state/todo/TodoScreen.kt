@@ -108,6 +108,10 @@ fun TodoScreen(
  * Slots : 호출하는 쪽에서 Composable에게 화면의 일부를 선택하고 Parameter로 전달한다.
  * @Composable () -> Unit의 형태로 매개변수에서 선언된다.
  * Slot은 Stateless한 Composable에 파라미터가 무수히 많아지는 것을 방지할 때 고려해보기 좋다.
+ *
+ * IconAlpha는 TodoRow에 remember되어있다.
+ * 따라서 TodoRow가 재생성될 경우, IconAlpha도 다시 초기화된다.
+ * 이게 싫을 경우 State Hoisting을 해 주어야 한다.
  */
 
 /**
