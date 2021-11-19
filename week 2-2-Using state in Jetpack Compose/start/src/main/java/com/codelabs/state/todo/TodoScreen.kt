@@ -96,7 +96,7 @@ fun TodoScreen(
  *
  * 2 - 2 - 8. Extracting stateless Composables :
  * https://developer.android.com/codelabs/jetpack-compose-state?authuser=4&continue=https%3A%2F%2Fdeveloper.android.com%2Fcourses%2Fpathways%2Fcompose%3Fhl%3Den%26authuser%3D4%23codelab-https%3A%2F%2Fdeveloper.android.com%2Fcodelabs%2Fjetpack-compose-state&hl=en#7
- * 참조. Stateless한 Composable을 Stateful하게 만든다.
+ * 참조. Stateful한 Composable을 Stateless하게 만든다.
  * 이 예시에서는 TodoItemInput ->(Event) TodoScreen였는데, TodoItemInput을 나누어서
  * TodoItemEntryInput ->(Event) TodoItemInput로 만들었다.
  * 수정 기능을 추가하기 위함이다.
@@ -108,6 +108,7 @@ fun TodoScreen(
  */
 @Composable
 fun TodoItemEntryInput(onItemComplete: (TodoItem) -> Unit) {
+fun TodoItemEntryInput(onItemComplete: (TodoItem) -> Unit) { // Stateful
     val (text, setText) = remember { mutableStateOf("")} // State Hoist
     val (icon, setIcon) = remember { mutableStateOf( TodoIcon.Default) }
     val iconVisible = text.isNotBlank() // iconVisible은 text에 Mapping되어 있기 때문에 상관없다.
@@ -140,6 +141,7 @@ fun TodoItemInput(
     submit: () -> Unit,
     iconVisible: Boolean
 ) {
+) { // Stateless,
     Column {
         Row(
             Modifier
