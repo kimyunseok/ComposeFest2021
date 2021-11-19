@@ -62,9 +62,13 @@ class TodoActivity : AppCompatActivity() {
     private fun TodoActivityScreen(todoViewModel: TodoViewModel) {
         TodoScreen(
             items = todoViewModel.todoItems,
+            currentlyEditing = todoViewModel.currentEditItem,
             //아래 두 개가 events up! 코틀린 람다 형태로 전달된다.
-            onAddItem = {todoViewModel.addItem(it)},
-            onRemoveItem = {todoViewModel.removeItem(it)}
+            onAddItem = todoViewModel::addItem,
+            onRemoveItem = todoViewModel::removeItem,
+            onStartEdit = todoViewModel::onEditItemSelected,
+            onEditItemChange = todoViewModel::onEditItemChange,
+            onEditDone = todoViewModel::onEditDone
         )
     }
 }

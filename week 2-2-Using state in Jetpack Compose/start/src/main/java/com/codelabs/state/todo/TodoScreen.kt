@@ -27,6 +27,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.codelabs.state.util.generateRandomTodoItem
@@ -42,24 +43,51 @@ import kotlin.random.Random
 @Composable
 fun TodoScreen(
     items: List<TodoItem>,
+    currentlyEditing: TodoItem?,
     onAddItem: (TodoItem) -> Unit,
-    onRemoveItem: (TodoItem) -> Unit
+    onRemoveItem: (TodoItem) -> Unit,
+    onStartEdit: (TodoItem) -> Unit,
+    onEditItemChange: (TodoItem) -> Unit,
+    onEditDone: () -> Unit
 ) {
     Column {
-        TodoItemInputBackground(elevate = true, modifier = Modifier.fillMaxWidth()) {
-            TodoItemEntryInput(onItemComplete = onAddItem)
+        val enableTopSelection = (currentlyEditing == null) // NULL값이라면 상단에 ADD, 아니라면 수정중. 다른 UI 표시
+        TodoItemInputBackground(elevate = enableTopSelection) {
+            // enableTopSelection이라면 TodoItemEntryInput을, 아니라면 Text를 띄운다.
+            if(enableTopSelection) {
+                TodoItemEntryInput(onItemComplete = onAddItem)
+                //TodoItemEntryInput은 Stateful하지만, ViewModel로 State Hoisting을 하고 있으므로 상관 없다.
+            } else {
+                Text(text = "Editing Item",
+                    style = MaterialTheme.typography.h6,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .align(Alignment.CenterVertically)
+                        .padding(16.dp)
+                        .fillMaxWidth())
+
+            }
         }
 
         LazyColumn(
             modifier = Modifier.weight(1f),
             contentPadding = PaddingValues(top = 8.dp)
         ) {
-            items(items = items) {
-                TodoRow(
-                    todo = it,
-                    onItemClicked = { onRemoveItem(it) },
-                    modifier = Modifier.fillParentMaxWidth()
-                )
+            items(items = items) { todo ->
+                if(currentlyEditing?.id == todo.id) {
+                    TodoItemInlineEditor(
+                        item = currentlyEditing,
+                        onEditItemChange = onEditItemChange,
+                        onEditDone = onEditDone,
+                        onRemoveItem = { onRemoveItem(todo) }
+                    )
+                } else {
+                    TodoRow(
+                        todo = todo,
+                        onItemClicked = { onStartEdit(it) },
+                        modifier = Modifier.fillParentMaxWidth()
+                    )
+                }
             }
         }
 
@@ -74,6 +102,30 @@ fun TodoScreen(
         }
     }
 }
+
+/**
+ * 2-2 - 11. Reuse stateless Composables :
+ * 이전에 Stateful한 TodoItemInput을 Stateless하게 만들었으므로 이 Stateless한 Composable을 사용할 수 있게된다.
+ * Stateful : 내부적으로 상태를 직접 가지고 있는 Composable. 대부분 remember를 사용한다.
+ * Stateless : 내부적으로 상태를 직접 가지지 않는 Composable
+ */
+//
+@Composable
+fun TodoItemInlineEditor(
+    item: TodoItem,
+    onEditItemChange: (TodoItem) -> Unit,
+    onEditDone: () -> Unit,
+    onRemoveItem: () -> Unit
+) = TodoItemInput( // TodoItemInput은 Stateless하므로 재사용이 가능하다.
+    text = item.task,
+    onTextChange = {onEditItemChange(item.copy(task = it))},
+    icon = item.icon,
+    onIconChange = {onEditItemChange(item.copy(icon = it))},
+    submit = onEditDone,
+    iconVisible = true
+//copy() 메서드는 Data Class에서 사용가능하다. 해당 인스턴스를 복사한 후에 파라미터에 있는 값을 변경해준다.
+)
+
 /**
  * 6. State In Compose
  * stateful composable : 시간이 지남에 따라 변하는 State를 소유한 Composable. 값의 중복을 막을 수 있다.
@@ -107,9 +159,8 @@ fun TodoScreen(
  * 3. 만일 같은 이벤트에서 호이스팅되는 State가 두 가지 이상이라면, 동시에 호이스팅 되어져야 한다.
  */
 @Composable
-fun TodoItemEntryInput(onItemComplete: (TodoItem) -> Unit) {
 fun TodoItemEntryInput(onItemComplete: (TodoItem) -> Unit) { // Stateful
-    val (text, setText) = remember { mutableStateOf("")} // State Hoist
+    val (text, setText) = remember { mutableStateOf("")}
     val (icon, setIcon) = remember { mutableStateOf( TodoIcon.Default) }
     val iconVisible = text.isNotBlank() // iconVisible은 text에 Mapping되어 있기 때문에 상관없다.
     //val iconsVisible: LiveData<Boolean> = textLiveData.map { it.isNotBlank() } 의 형태와 같음.
@@ -123,9 +174,9 @@ fun TodoItemEntryInput(onItemComplete: (TodoItem) -> Unit) { // Stateful
 
     //람다를 넘겨주는 방식은 Compose에서 Event를 특정짓는 일반적인 방법이다.
     TodoItemInput(
-        text = text,
+        text = text, // State Hoist
         onTextChange = setText,
-        icon = icon,
+        icon = icon, // State Hoist
         onIconChange = setIcon,
         submit = submit,
         iconVisible = iconVisible
@@ -140,7 +191,6 @@ fun TodoItemInput(
     onIconChange: (TodoIcon) -> Unit,
     submit: () -> Unit,
     iconVisible: Boolean
-) {
 ) { // Stateless,
     Column {
         Row(
@@ -244,7 +294,7 @@ fun PreviewTodoScreen() {
         TodoItem("Apply state", TodoIcon.Done),
         TodoItem("Build dynamic UIs", TodoIcon.Square)
     )
-    TodoScreen(items, {}, {})
+    TodoScreen(items, null, {}, {}, {}, {}, {}) // Preview는 이런 식으로 수정하면 됨.(Signature가 바뀌어도 Compile하지 않으므로,)
 }
 
 @Preview
